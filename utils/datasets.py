@@ -39,18 +39,24 @@ def load_data(filename):
     # data['state'] = pd.to_numeric(data['state'], errors='coerce')
     # data['attack_cat'] = pd.to_numeric(data['attack_cat'], errors='coerce')
     # data = data.replace(np.nan, 0.0, regex=True)
+    # data = data.apply(lambda s: s.str.replace('"', ""))
     data.to_numpy()
+    print("Data head")
+    print(data.head())
+    # data = data.apply(pd.to_numeric(data))
     data = data.astype(np.float32)
-    # print(data)
+    print("Full data")
+    print(data)
+
     # with open(filename, encoding="utf-8") as f:
     #     reader = csv.reader(f)
     #     data = np.array([row for row in reader
-    #                      if '#' not in row[0]]).astype(np.float32)
+    #                      if 'stime' not in row[0]]).astype(np.float32)
 
     X = data.values[:, 1:]
     print(X)
 
-    Y = data.values[:, 0]
+    Y = data.values[:, 44]
     print("Before Y")
     print(Y)
     Y = np.clip(Y, 0, 1)

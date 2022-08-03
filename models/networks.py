@@ -17,7 +17,7 @@ def gen_res_net(sizes):
     """
 
     def build_net(X, keep_prob=tf.constant(1.0)):
-        lrelu   = nn.lrelu_gen(0.1)
+        lrelu = nn.lrelu_gen(0.1)
 
         def block(x, in_dim, out_dim, i):
             with tf.compat.v1.variable_scope('block_{}'.format(i)):

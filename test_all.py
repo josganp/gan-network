@@ -5,11 +5,11 @@ import numpy as np
 import os
 
 hyperparameters = dict(
-    num_features=12, num_epochs=1000, normalize=True,
-    debug=True, latent_vector_size=9,
+    num_features=44, num_epochs=500, normalize=True,
+    debug=True, latent_vector_size=100,
     batch_size=1000, ns_param=0.5, adpt_l=0,
     res_depth=1, dr_param=1, batch_param=1e-2,
-    display_step=10, d_learning_rate=1e-3,
+    display_step=10, d_learning_rate=1e-4,
     reg_param=1e-3, g_learning_rate=1e-4
 )
 
@@ -37,27 +37,27 @@ trial = np.max(trials) + 1
 print('Trial number: ' + str(trial))
 os.mkdir('results/trial_{}'.format(trial))
 
-exploits = ['multi_encrypt', 'freak', 'nginx_keyleak', 'nginx_rootdir']
+exploits = ['UNSW_NB15']
 summaries = {'hyperparameters': hyperparameters}
 raw_data = []
 
 for exploit in exploits:
     data = []
 
-    for i in range(5):
+    for i in range(1):
 
         trX, trY = ds.load_data(
             (
-                './data/three-step/{}/subset_{}/train_set.csv'
+                './data/{}_training-set.csv'
             ).format(exploit, i)
         )
 
         model.train(trX, trY)
 
-        for i in range(5):
+        for i in range(1):
             teX, teY = ds.load_data(
                 (
-                    './data/three-step/{}/subset_{}/test_set.csv'
+                    './data/{}_testing-set.csv'
                 ).format(exploit, i)
             )
 
