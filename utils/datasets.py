@@ -25,10 +25,10 @@ def load_data(filename):
     # data['state'] = hashlib.sha256(data['state'].values.tobytes())
     # data['attack_cat'] = hashlib.sha256(data['attack_cat'].values.tobytes())
 
-    data['proto'] = data['proto'].apply(hash)
-    data['service'] = data['service'].apply(hash)
-    data['state'] = data['state'].apply(hash)
-    data['attack_cat'] = data['attack_cat'].apply(hash)
+    # data['proto'] = data['proto'].apply(hash)
+    # data['service'] = data['service'].apply(hash)
+    # data['state'] = data['state'].apply(hash)
+    # data['attack_cat'] = data['attack_cat'].apply(hash)
 
     # data['proto'] = pd.util.hash_pandas_object(data['proto'], encoding='utf8')
     # data['service'] = pd.util.hash_pandas_object(data['service'], encoding='utf8')
@@ -41,12 +41,12 @@ def load_data(filename):
     # data = data.replace(np.nan, 0.0, regex=True)
     # data = data.apply(lambda s: s.str.replace('"', ""))
     data.to_numpy()
-    print("Data head")
-    print(data.head())
+    # print("Data head")
+    # print(data.head())
     # data = data.apply(pd.to_numeric(data))
     data = data.astype(np.float32)
-    print("Full data")
-    print(data)
+    # print("Full data")
+    # print(data)
 
     # with open(filename, encoding="utf-8") as f:
     #     reader = csv.reader(f)
@@ -54,13 +54,13 @@ def load_data(filename):
     #                      if 'stime' not in row[0]]).astype(np.float32)
 
     X = data.values[:, 1:]
-    print(X)
+    # print(X)
 
-    Y = data.values[:, 44]
-    print("Before Y")
-    print(Y)
+    Y = data.values[:, 40]
+    # print("Before Y")
+    # print(Y)
     Y = np.clip(Y, 0, 1)
-    print("After Y")
+    # print("After Y")
     print(Y)
 
     return X, Y

@@ -5,12 +5,12 @@ import numpy as np
 import os
 
 hyperparameters = dict(
-    num_features=44, num_epochs=500, normalize=True,
+    num_features=40, num_epochs=1000, normalize=True,
     debug=True, latent_vector_size=100,
     batch_size=1000, ns_param=0.5, adpt_l=0,
     res_depth=1, dr_param=1, batch_param=1e-2,
-    display_step=10, d_learning_rate=1e-4,
-    reg_param=1e-3, g_learning_rate=1e-4
+    display_step=10, d_learning_rate=1e-3,
+    reg_param=1e-3, g_learning_rate=1e-3
 )
 
 
@@ -48,7 +48,7 @@ for exploit in exploits:
 
         trX, trY = ds.load_data(
             (
-                './data/{}_training-set.csv'
+                './data/{}_training-set-modified.csv'
             ).format(exploit, i)
         )
 
@@ -57,7 +57,7 @@ for exploit in exploits:
         for i in range(1):
             teX, teY = ds.load_data(
                 (
-                    './data/{}_testing-set.csv'
+                    './data/{}_testing-set-modified.csv'
                 ).format(exploit, i)
             )
 
