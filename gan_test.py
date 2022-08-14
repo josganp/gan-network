@@ -3,7 +3,7 @@ import models.gan
 import json
 
 model = models.gan.GAN(
-    num_features=44, num_epochs=1000, normalize=True,
+    num_features=44, num_epochs=500, normalize=True,
     debug=True, latent_vector_size=9,
     batch_size=1000, ns_param=0.01, adpt_l=0,
     res_depth=1, dr_param=1, batch_param=0.02,

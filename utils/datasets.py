@@ -5,11 +5,12 @@
 import csv
 import hashlib
 
+import category_encoders as ce
 import numpy as np
 import pandas as pd
 
 
-def load_data(filename):
+def load_data(top_11_list_proto, top_10_list_state, filename):
     """Returns the features of a dataset.
 
     Args:
@@ -19,52 +20,60 @@ def load_data(filename):
         tuple of np.ndarray: Tuple consisiting of the features,
             X, and the labels, Y.
     """
+
     data = pd.read_csv(filename)
-    # data['proto'] = hashlib.sha256(data['proto'].values.tobytes())
-    # data['service'] = hashlib.sha256(data['service'].values.tobytes())
-    # data['state'] = hashlib.sha256(data['state'].values.tobytes())
-    # data['attack_cat'] = hashlib.sha256(data['attack_cat'].values.tobytes())
 
-    # data['proto'] = data['proto'].apply(hash)
-    # data['service'] = data['service'].apply(hash)
-    # data['state'] = data['state'].apply(hash)
-    # data['attack_cat'] = data['attack_cat'].apply(hash)
+    for label in top_11_list_proto:
+        data['proto'+'_'+label] = np.where(data['proto'] == label, 1, 0)
 
-    # data['proto'] = pd.util.hash_pandas_object(data['proto'], encoding='utf8')
-    # data['service'] = pd.util.hash_pandas_object(data['service'], encoding='utf8')
-    # data['state'] = pd.util.hash_pandas_object(data['state'], encoding='utf8')
-    # data['attack_cat'] = pd.util.hash_pandas_object(data['attack_cat'], encoding='utf8')
-    # data['proto'] = pd.to_numeric(data['proto'], errors='coerce')
-    # data['service'] = pd.to_numeric(data['service'], errors='coerce')
-    # data['state'] = pd.to_numeric(data['state'], errors='coerce')
-    # data['attack_cat'] = pd.to_numeric(data['attack_cat'], errors='coerce')
-    # data = data.replace(np.nan, 0.0, regex=True)
-    # data = data.apply(lambda s: s.str.replace('"', ""))
-    data.to_numpy()
-    # print("Data head")
-    # print(data.head())
-    # data = data.apply(pd.to_numeric(data))
-    data = data.astype(np.float32)
-    # print("Full data")
-    # print(data)
+    for label in top_10_list_state:
+        data['state' + '_' + label] = np.where(data['state'] == label, 1, 0)
+
+    encoder = ce.OneHotEncoder(verbose=1, cols=['service'], return_df=True,
+                               use_cat_names=True)
+
+    # Fit and transform Data
+    df_encoded = encoder.fit_transform(data)
+
+    df_new = df_encoded.drop(['proto', 'state'], axis=1)
+    # df_new.insert(len(df_new.columns) - 1, 'attack_cat', df_new.pop('attack_cat'))
+    df_new.insert(len(df_new.columns) - 1, 'label', df_new.pop('label'))
+    # column_to_move_2 = df_new.pop('attack_cat')
+    # df_new.insert(len(df_new.columns)-1, 'attack_cat', column_to_move_2)
+
+    # print(df_new.head())
+
+    df_new.to_numpy()
+
+    df_new = df_new.astype(np.float32)
 
     # with open(filename, encoding="utf-8") as f:
     #     reader = csv.reader(f)
     #     data = np.array([row for row in reader
     #                      if 'stime' not in row[0]]).astype(np.float32)
 
-    X = data.values[:, 1:]
-    # print(X)
+    X = df_new.values[:, 1:]
 
-    Y = data.values[:, 40]
-    # print("Before Y")
-    # print(Y)
+    Y = df_new.values[:, -1]
+
     Y = np.clip(Y, 0, 1)
-    # print("After Y")
-    print(Y)
 
     return X, Y
 
+def concat_dataset():
+    df = pd.concat(map(pd.read_csv, ['UNSW-NB15-modified_1.csv', 'UNSW-NB15-modified_2.csv', 'UNSW-NB15-modified_3.csv',
+                                     'UNSW-NB15-modified_4.csv']), ignore_index=True)
+
+    df['proto'].value_counts().sort_values(ascending=False).head(20)
+
+    # make a list of the most frequent categories of the column
+    top_11_proto = [cat for cat in df['proto'].value_counts().sort_values(ascending=False).head(11).index]
+
+    df['state'].value_counts().sort_values(ascending=False).head(20)
+    # make a list of the most frequent categories of the column
+    top_10_state = [cat for cat in df['state'].value_counts().sort_values(ascending=False).head(10).index]
+
+    return top_11_proto, top_10_state
 
 def batcher(data, batch_size=100):
     """Creates a generator to yield batches of batch_size.

@@ -1,11 +1,14 @@
 """Generative Adversarial Network for Training the Discriminator
 
 """
+import pickle
 
 import numpy as np
 import tensorflow as tf
 import json
 import csv
+
+from matplotlib import pyplot
 
 import utils.datasets as ds
 import models.nnblocks as nn
@@ -133,28 +136,27 @@ class GAN:
         #     return z
 
         def build_net(x, sizes):
-            lrelu = nn.lrelu_gen(0.1)
-            sizes = [[sizes[i], sizes[i+1]] for i in range(len(sizes)-1)]
+            lrelu = nn.lrelu_gen(0.01)
+            sizes = [[sizes[i], sizes[i + 1]] for i in range(len(sizes) - 1)]
+            print(sizes)
 
             def build_block(x, _in, _out):
                 z = x
-
                 for i in range(self.res_depth):
                     with tf.compat.v1.variable_scope('fc_layer_{}'.format(i)):
                         f = tf.nn.dropout(
                             nn.build_fc_layer(
                                 z, lrelu, _in, _in, self.reg_param
                             ),
-                            rate = 1 - (self.keep_prob)
+                            rate=1 - self.keep_prob
                         )
-
                         z = f + z
 
                 return tf.nn.dropout(
                     nn.build_fc_layer(
                         z, lrelu, _in, _out, self.reg_param
                     ),
-                    rate = 1 - (self.keep_prob)
+                    rate=1 - self.keep_prob
                 )
 
             z = x
@@ -170,7 +172,8 @@ class GAN:
         vec_size = self.num_features * self.num_steps
 
         g_sizes = [self.latent_vector_size, 100, vec_size]
-        d_sizes = [vec_size, 18, 9, 3, 2]
+        # d_sizes = [vec_size, 18, 9, 3, 2] # original d_sizes with 36 features (12 features * 3 time steps)
+        d_sizes = [vec_size, 36, 18, 9, 3, 2]
 
         # g_sizes = [self.latent_vector_size, vec_size]
         # d_sizes = [vec_size, 18, 9, 3, 2]
@@ -188,7 +191,8 @@ class GAN:
 
         # self.scores = tf.nn.sigmoid(D_logit_real)
         # self.scores = tf.squeeze(D_real)
-        self.scores = D_logit_real
+        # self.scores = D_logit_real
+        self.scores = D_real
 
         ########################################
         # Losses & Optimizers                  #
@@ -273,6 +277,7 @@ class GAN:
 
         # Optimizers
         self.D_solver = tf.compat.v1.train.AdamOptimizer(self.d_learning_rate).minimize(
+        # self.D_solver = tf.keras.optimizers.Adam(self.d_learning_rate).minimize(
             self.D_loss,
             var_list=tf.compat.v1.get_collection(
                 tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES,
@@ -281,6 +286,7 @@ class GAN:
         )
 
         self.G_solver = tf.compat.v1.train.AdamOptimizer(self.g_learning_rate).minimize(
+        # self.G_solver = tf.keras.optimizers.Adam(self.g_learning_rate).minimize(
             self.G_loss,
             var_list=tf.compat.v1.get_collection(
                 tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES,
@@ -361,6 +367,9 @@ class GAN:
 
             count = 0
 
+            # prepare lists for storing stats each iteration
+            d1_hist, d2_hist, g_hist, a1_hist, a2_hist = list(), list(), list(), list(), list()
+
             for epoch in range(self.num_epochs):
                 d_loss = 0
                 g_loss = 0
@@ -386,6 +395,8 @@ class GAN:
                     count += 1
 
                     d_loss += ld
+                    # d1_hist.append(ld)
+                    # print(f"{epoch} {ld}")
 
                 for i in range(kg):
                     batch_x, batch_y = next(batch)
@@ -405,6 +416,7 @@ class GAN:
                     count += 1
 
                     g_loss += lg
+                    # g_hist.append(lg)
 
                 prev_diff_loss = ld - lg
 
@@ -414,12 +426,14 @@ class GAN:
                     )
                     display_str += '\nkd={3}, kg={4}'
                     display_str = display_str.format(
-                        epoch+1,
-                        d_loss/kd,
-                        g_loss/kg,
+                        epoch + 1,
+                        d_loss / kd,
+                        g_loss / kg,
                         kd, kg
                     )
                     self.print(display_str)
+
+            # self.plot_history(d1_hist, g_hist)
 
             # assign normalization values
             if self.normalize == 'rescaling':
@@ -430,6 +444,7 @@ class GAN:
 
             # save model
             save_path = self.saver.save(sess, './model.ckpt')
+            pickle.dump(sess, open("./model.pkl", "wb"))
             self.print('Model saved in file: {}'.format(save_path))
 
     def test(self, X, Y):
@@ -467,10 +482,10 @@ class GAN:
                 }
             )
 
-            avg_benign      = []
-            avg_malicious   = []
+            avg_benign = []
+            avg_malicious = []
             for i, label in enumerate(labels):
-                if Y[i] == 1:
+                if Y[i] == 0:
                     avg_benign.append(label)
                 else:
                     avg_malicious.append(label)
@@ -531,3 +546,19 @@ class GAN:
     def print(self, val):
         if self.debug:
             print(val)
+
+    def plot_history(self, d1_hist, g_hist):
+        # plot loss
+        pyplot.subplot(2, 1, 1)
+        pyplot.plot(d1_hist, label='d-real')
+        # pyplot.plot(d2_hist, label='d-fake')
+        pyplot.plot(g_hist, label='gen')
+        pyplot.legend()
+        # plot discriminator accuracy
+        # pyplot.subplot(2, 1, 2)
+        # pyplot.plot(a1_hist, label='acc-real')
+        # pyplot.plot(a2_hist, label='acc-fake')
+        # pyplot.legend()
+        # save plot to file
+        pyplot.savefig('graph/plot_line_plot_loss.png')
+        pyplot.close()

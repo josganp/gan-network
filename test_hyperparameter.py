@@ -9,7 +9,7 @@ params = [10, 50, 100, 500, 1000, 2000, 5000]
 hyperparam_name = 'num_epochs'
 
 hyperparameters = dict(
-    num_features=44, num_epochs=1000, normalize='rescaling',
+    num_features=40, num_epochs=1000, normalize='rescaling',
     debug=True, latent_vector_size=100,
     batch_size=1000, ns_param=.5, adpt_l=0,
     res_depth=1, dr_param=1, batch_param=1e-2,
@@ -38,7 +38,8 @@ loc = 'results/{}'.format(hyperparam_name)
 if not os.path.exists(loc):
     os.mkdir(loc)
 
-exploits = ['freak', 'nginx_keyleak', 'nginx_rootdir', 'caleb']
+exploits = ['UNSW_NB15']
+# exploits = ['freak', 'nginx_keyleak', 'nginx_rootdir', 'caleb']
 
 for param in params:
     hyperparameters[hyperparam_name] = param
@@ -59,20 +60,20 @@ for param in params:
         for exploit in exploits:
             data = []
 
-            for i in range(5):
+            for i in range(1):
 
                 trX, trY = ds.load_data(
                     (
-                        './data/three-step/{}/subset_{}/train_set.csv'
+                        './data/{}_training-set-modified.csv'
                     ).format(exploit, i)
                 )
 
                 model.train(trX, trY)
 
-                for i in range(5):
+                for i in range(1):
                     teX, teY = ds.load_data(
                         (
-                            './data/three-step/{}/subset_{}/test_set.csv'
+                            './data/{}_testing-set-modified.csv'
                         ).format(exploit, i)
                     )
 

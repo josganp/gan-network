@@ -1,14 +1,14 @@
-import utils.file_ops as fops
+import utils.datasets as ds
 import models.gan
 import json
 import numpy as np
 import tensorflow as tf
 import os
-import plotly.plotly as py
+import chart_studio.plotly as py
 import plotly.graph_objs as go
 
 hyperparameters = dict(
-    num_features=12, num_epochs=1000, normalize=True,
+    num_features=40, num_epochs=1000, normalize=True,
     debug=True, latent_vector_size=72,
     batch_size=1000, ns_param=.5, adpt_l=0,
     res_depth=1, dr_param=1, batch_param=1e-2,
@@ -38,7 +38,8 @@ loc = 'results/{}'.format(loc_name)
 if not os.path.exists(loc):
     os.mkdir(loc)
 
-exploits = ['freak', 'nginx_keyleak', 'nginx_rootdir', 'caleb']
+exploits = ['UNSW_NB15']
+# exploits = ['freak', 'nginx_keyleak', 'nginx_rootdir', 'caleb']
 
 summaries = {'hyperparameters': hyperparameters}
 raw_data = []
@@ -46,13 +47,13 @@ net_data = {exploit: [] for exploit in exploits}
 
 model = models.gan.GAN(**hyperparameters)
 
-for i in range(5):
+for i in range(1):
     training_data = []
 
     for tr_exploit in exploits:
-        training_data.append(fops.load_data(
+        training_data.append(ds.load_data(
             (
-                './data/three-step/{}/subset_{}/train_set.csv'
+                './data/{}_training-set-modified.csv'
             ).format(tr_exploit, i)
         ))
 
@@ -62,10 +63,10 @@ for i in range(5):
     model.train(trX, trY)
 
     for test_exploit in exploits:
-        for j in range(5):
-            teX, teY = fops.load_data(
+        for j in range(1):
+            teX, teY = ds.load_data(
                 (
-                    './data/three-step/{}/subset_{}/test_set.csv'
+                    './data/{}_testing-set-modified.csv'
                 ).format(test_exploit, j)
             )
 
@@ -94,4 +95,5 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=boxes, layout=layout)
-py.plot(fig, filename='add-gan-general-results')
+# py.plot(fig, filename='add-gan-general-results')
+fig.show()
