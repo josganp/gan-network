@@ -68,6 +68,7 @@ class GAN:
         # TensorFlow Variables                 #
         ########################################
         tf.compat.v1.disable_eager_execution()
+        tf.compat.v1.reset_default_graph()
 
         self.X = tf.compat.v1.placeholder(
             'float32',
@@ -138,7 +139,6 @@ class GAN:
         def build_net(x, sizes):
             lrelu = nn.lrelu_gen(0.01)
             sizes = [[sizes[i], sizes[i + 1]] for i in range(len(sizes) - 1)]
-            print(sizes)
 
             def build_block(x, _in, _out):
                 z = x
@@ -173,7 +173,7 @@ class GAN:
 
         g_sizes = [self.latent_vector_size, 100, vec_size]
         # d_sizes = [vec_size, 18, 9, 3, 2] # original d_sizes with 36 features (12 features * 3 time steps)
-        d_sizes = [vec_size, 36, 18, 9, 3, 2]
+        d_sizes = [vec_size, 18, 9, 3, 2]
 
         # g_sizes = [self.latent_vector_size, vec_size]
         # d_sizes = [vec_size, 18, 9, 3, 2]
@@ -187,12 +187,13 @@ class GAN:
             D_logit_fake = build_net(G_sample, d_sizes)
 
         D_fake = tf.nn.sigmoid(D_logit_fake)
-        D_real = tf.nn.sigmoid(D_logit_real)
+        D_real = tf.nn.sigmoid(D_logit_real, name="prediction")
 
         # self.scores = tf.nn.sigmoid(D_logit_real)
         # self.scores = tf.squeeze(D_real)
         # self.scores = D_logit_real
         self.scores = D_real
+        print(self.scores)
 
         ########################################
         # Losses & Optimizers                  #
@@ -308,7 +309,8 @@ class GAN:
 
         # )
 
-        pred_labels = tf.argmax(input=self.scores, axis=1)
+        pred_labels = tf.argmax(input=self.scores, axis=1, name="pred")
+        print(pred_labels)
 
         self.confusion_matrix = tf.math.confusion_matrix(
             labels=self.Y,
@@ -444,10 +446,10 @@ class GAN:
 
             # save model
             save_path = self.saver.save(sess, './model.ckpt')
-            pickle.dump(sess, open("./model.pkl", "wb"))
+            # pickle.dump(sess, open("./model.pkl", "wb"))
             self.print('Model saved in file: {}'.format(save_path))
 
-    def test(self, X, Y):
+    def test(self, X):
         """Tests classifier
 
         Args:
@@ -476,19 +478,19 @@ class GAN:
                  self.D_loss, self.G_loss],
                 feed_dict={
                     self.X: X,
-                    self.Y: Y,
+                    # self.Y: Y,
                     self.Z: self.sample_Z(n=X.shape[0]),
                     self.keep_prob: 1.0
                 }
             )
-
+            print(labels)
             avg_benign = []
             avg_malicious = []
-            for i, label in enumerate(labels):
-                if Y[i] == 0:
-                    avg_benign.append(label)
-                else:
-                    avg_malicious.append(label)
+            # for i, label in enumerate(labels):
+            #     if Y[i] == 0:
+            #         avg_benign.append(label)
+            #     else:
+            #         avg_malicious.append(label)
 
             data = {
                 'benign': {
@@ -512,7 +514,7 @@ class GAN:
             Z = self.sample_Z(n=X.shape[0])
             embeddings = sess.run(self.embedding_ops, feed_dict={
                 self.X: X,
-                self.Y: Y,
+                # self.Y: Y,
                 self.Z: Z,
                 self.keep_prob: 1.0
             })

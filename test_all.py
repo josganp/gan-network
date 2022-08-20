@@ -9,9 +9,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 hyperparameters = dict(
-    num_features=72, num_epochs=100, normalize=True,
+    num_features=39, num_epochs=50, normalize=True,
     debug=True, latent_vector_size=100,
-    batch_size=20000, ns_param=0.5, adpt_l=0,
+    batch_size=10000, ns_param=0.5, adpt_l=0,
     res_depth=3, dr_param=1, batch_param=1e-2,
     display_step=10, d_learning_rate=1e-2,
     reg_param=1e-3, g_learning_rate=1e-4,
@@ -48,13 +48,13 @@ raw_data = []
 
 for exploit in exploits:
     data = []
-    top_11_proto, top_10_state = ds.concat_dataset()
+    top_12_proto, top_10_state = ds.concat_dataset()
 
     for i in range(1):
 
-        trX, trY = ds.load_data(top_11_proto, top_10_state,
+        trX, trY = ds.load_data(top_12_proto, top_10_state,
             (
-                'UNSW_NB15_training-set.csv'
+                'UNSW_NB15_training-set-new.csv'
                 # '{}_{}.csv'
                 # './data/{}_training-set-39.csv'
             )
@@ -64,16 +64,16 @@ for exploit in exploits:
         model.train(trX, trY)
 
         for i in range(1):
-            teX, teY = ds.load_data(top_11_proto, top_10_state,
+            teX = ds.test_data(top_12_proto, top_10_state,
                 (
-                    'UNSW_NB15_testing-set.csv'
+                    'UNSW_NB15_testing-set-new.csv'
                     # '{}_{}.csv'
                     # './data/{}_testing-set-39.csv'
                 )
                 # ).format(exploit)
             )
 
-            d = model.test(teX, teY)
+            d = model.test(teX)
             data.append(d)
             raw_data.append(d)
 

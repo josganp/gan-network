@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 
-def load_data(top_11_list_proto, top_10_list_state, filename):
+def load_data(top_5_list_proto, top_5_list_state, filename):
     """Returns the features of a dataset.
 
     Args:
@@ -23,10 +23,60 @@ def load_data(top_11_list_proto, top_10_list_state, filename):
 
     data = pd.read_csv(filename)
 
-    for label in top_11_list_proto:
+    for label in top_5_list_proto:
         data['proto'+'_'+label] = np.where(data['proto'] == label, 1, 0)
 
-    for label in top_10_list_state:
+    for label in top_5_list_state:
+        data['state' + '_' + label] = np.where(data['state'] == label, 1, 0)
+
+    encoder = ce.OneHotEncoder(verbose=1, cols=['service'], return_df=True,
+                               use_cat_names=True)
+
+    # Fit and transform Data
+    df_encoded = encoder.fit_transform(data)
+
+    df_new = df_encoded.drop(['proto', 'state'], axis=1)
+    # df_new.insert(len(df_new.columns) - 1, 'attack_cat', df_new.pop('attack_cat'))
+    df_new.insert(len(df_new.columns) - 1, 'label', df_new.pop('label'))
+    # column_to_move_2 = df_new.pop('attack_cat')
+    # df_new.insert(len(df_new.columns)-1, 'attack_cat', column_to_move_2)
+
+    # print(df_new.head())
+
+    df_new.to_numpy()
+
+    df_new = df_new.astype(np.float32)
+
+    # with open(filename, encoding="utf-8") as f:
+    #     reader = csv.reader(f)
+    #     data = np.array([row for row in reader
+    #                      if 'stime' not in row[0]]).astype(np.float32)
+
+    X = df_new.values[:, 1:]
+
+    Y = df_new.values[:, -1]
+
+    Y = np.clip(Y, 0, 1)
+
+    return X, Y
+
+def test_data(top_5_list_proto, top_5_list_state, filename):
+    """Returns the features of a dataset.
+
+    Args:
+        filename (str): File location (csv formatted).
+
+    Returns:
+        tuple of np.ndarray: Tuple consisiting of the features,
+            X, and the labels, Y.
+    """
+
+    data = pd.read_csv(filename)
+
+    for label in top_5_list_proto:
+        data['proto'+'_'+label] = np.where(data['proto'] == label, 1, 0)
+
+    for label in top_5_list_state:
         data['state' + '_' + label] = np.where(data['state'] == label, 1, 0)
 
     encoder = ce.OneHotEncoder(verbose=1, cols=['service'], return_df=True,
@@ -67,13 +117,13 @@ def concat_dataset():
     df['proto'].value_counts().sort_values(ascending=False).head(20)
 
     # make a list of the most frequent categories of the column
-    top_11_proto = [cat for cat in df['proto'].value_counts().sort_values(ascending=False).head(11).index]
+    top_5_proto = [cat for cat in df['proto'].value_counts().sort_values(ascending=False).head(5).index]
 
     df['state'].value_counts().sort_values(ascending=False).head(20)
     # make a list of the most frequent categories of the column
-    top_10_state = [cat for cat in df['state'].value_counts().sort_values(ascending=False).head(10).index]
+    top_5_state = [cat for cat in df['state'].value_counts().sort_values(ascending=False).head(5).index]
 
-    return top_11_proto, top_10_state
+    return top_5_proto, top_5_state
 
 def batcher(data, batch_size=100):
     """Creates a generator to yield batches of batch_size.

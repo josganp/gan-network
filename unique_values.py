@@ -1,6 +1,7 @@
 import pandas as pd
 
 for i in range(4):
+    # data = pd.read_csv(('UNSW-NB15-modified_{}.csv').format(i+1))
     data = pd.read_csv(('UNSW-NB15-modified_{}.csv').format(i+1))
     print(f"\nFile {i+1}\n")
     print('Unique values for proto')
